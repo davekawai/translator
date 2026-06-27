@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translator - Free & Unlimited</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container { width: min(100%, 720px); margin: 0 auto; }
+    
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .editor-panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    input[type="text"], select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+      color: #333;
+    }
+    
+    select {
+      height: 44px;
+      cursor: pointer;
+    }
+    
+    .lang-selectors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    
+    .selected-box {
+      padding: 12px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: #333;
+    }
+    
+    .results-box {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .results-box.fullscreen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .results-box.fullscreen #results {
+      width: min(100%, 760px);
+      max-height: 100%;
+      overflow: auto;
+    }
+
+    .results-box.fullscreen .translation-item {
+      padding: 16px 0;
+    }
+    
+    .result-item {
+      margin-bottom: 2rem;
+      display: none;
+    }
+    
+    .result-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .result-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    .original-text {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    
+    .translation-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .language-options {
+      display: grid;
+      gap: 0.6rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .checkbox-option input {
+      margin: 0;
+    }
+
+    .translation-item {
+      padding: 8px 0;
+    }
+
+    .translation-item + .translation-item {
+      border-top: 1px solid #eee;
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    .result-item + .result-item {
+      border-top: 1px solid #ddd;
+      margin-top: 18px;
+      padding-top: 18px;
+    }
+
+    .results-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+
+    .control-group {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      padding: 3px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      flex-shrink: 0;
+    }
+
+    .icon-control-btn {
+      border: none;
+      background: transparent;
+      color: #666;
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      min-width: 28px;
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-control-btn:hover {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .icon-control-btn.active {
+      background: #333;
+      color: white;
+    }
+
+    .icon-control-btn svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .icon-control-btn svg path,
+    .icon-control-btn svg rect {
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon-control-btn.small-font {
+      font-size: 13px;
+    }
+
+    .icon-control-btn.medium-font {
+      font-size: 16px;
+    }
+
+    .icon-control-btn.large-font {
+      font-size: 20px;
+    }
+
+    .icon-control-btn.x-large-font {
+      font-size: 24px;
+    }
+
+    .icon-control-btn.xx-large-font {
+      font-size: 28px;
+    }
+
+    .results-box.size-small .original-text {
+      font-size: 12px;
+    }
+
+    .results-box.size-small .translation-text {
+      font-size: 18px;
+    }
+
+    .results-box.size-small .translation-translit {
+      font-size: 13px;
+    }
+
+    .results-box.size-medium .original-text {
+      font-size: 14px;
+    }
+
+    .results-box.size-medium .translation-text {
+      font-size: 24px;
+    }
+
+    .results-box.size-medium .translation-translit {
+      font-size: 16px;
+    }
+
+    .results-box.size-large .original-text {
+      font-size: 16px;
+    }
+
+    .results-box.size-large .translation-text {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .results-box.size-large .translation-translit {
+      font-size: 20px;
+    }
+
+    .results-box.size-x-large .original-text {
+      font-size: 18px;
+    }
+
+    .results-box.size-x-large .translation-text {
+      font-size: 40px;
+      font-weight: 700;
+    }
+
+    .results-box.size-x-large .translation-translit {
+      font-size: 24px;
+    }
+
+    .results-box.size-xx-large .original-text {
+      font-size: 20px;
+    }
+
+    .results-box.size-xx-large .translation-text {
+      font-size: 48px;
+      font-weight: 700;
+    }
+
+    .results-box.size-xx-large .translation-translit {
+      font-size: 28px;
+    }
+
+    .results-box.align-left .translation-item {
+      text-align: left;
+    }
+
+    .results-box.align-center .translation-item {
+      text-align: center;
+    }
+
+    .results-box.align-right .translation-item {
+      text-align: right;
+    }
+
+    .lang-header {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .translation-translit {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .translation-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 0.25rem;
+    }
+    
+    .translation-text {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem 0;
+      color: #999;
+      font-size: 14px;
+    }
+    
+    .error-message {
+      padding: 1rem;
+      background: #fee;
+      color: #c33;
+      border-radius: 4px;
+      margin-top: 1rem;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    
+    .subtitle {
+      color: #999;
+      margin-bottom: 2rem;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="editor-panel">
+      <div class="input-group">
+        <label>First menu</label>
+        <input id="text1" type="text" placeholder="Enter first menu...">
+      </div>
+
+      <div class="input-group">
+        <label>Second menu</label>
+        <input id="text2" type="text" placeholder="Enter second menu...">
+      </div>
+
+      <div class="input-group">
+        <label>Languages</label>
+        <div class="language-options">
+          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="zh-CN"> Chinese (Simplified)</label>
+          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="zh-TW"> Chinese (Traditional)</label>
+          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="fr"> French</label>
+          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="ja"> Japanese</label>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Selected languages</label>
+        <div class="selected-box" id="selectedLangs">Chinese (Simplified), French</div>
+      </div>
+    </div>
+
+    <div class="results-controls">
+      <div class="control-group" aria-label="Font size">
+        <button type="button" class="icon-control-btn small-font" data-control="font-size" data-value="small" title="Small font">A</button>
+        <button type="button" class="icon-control-btn medium-font active" data-control="font-size" data-value="medium" title="Medium font">A</button>
+        <button type="button" class="icon-control-btn large-font" data-control="font-size" data-value="large" title="Large font">A</button>
+        <button type="button" class="icon-control-btn x-large-font" data-control="font-size" data-value="x-large" title="Extra large font">A</button>
+        <button type="button" class="icon-control-btn xx-large-font" data-control="font-size" data-value="xx-large" title="Extra extra large font">A</button>
+      </div>
+      <div class="control-group" aria-label="Alignment">
+        <button type="button" class="icon-control-btn active" data-control="align" data-value="left" title="Align left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h10"/><path d="M4 9h16"/><path d="M4 13h10"/><path d="M4 17h16"/></svg>
+        </button>
+        <button type="button" class="icon-control-btn" data-control="align" data-value="center" title="Align center">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h12"/><path d="M4 9h16"/><path d="M6 13h12"/><path d="M4 17h16"/></svg>
+        </button>
+        <button type="button" class="icon-control-btn" data-control="align" data-value="right" title="Align right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5h10"/><path d="M4 9h16"/><path d="M10 13h10"/><path d="M4 17h16"/></svg>
+        </button>
+      </div>
+      <div class="control-group" aria-label="Fullscreen">
+        <button type="button" class="icon-control-btn" id="fullscreen-toggle" title="Fullscreen results">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H4v4"/><path d="M16 3h4v4"/><path d="M8 21H4v-4"/><path d="M16 21h4v-4"/><path d="M4 4l6 6"/><path d="M20 4l-6 6"/><path d="M4 20l6-6"/><path d="M20 20l-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="results-box">
+      <div id="results">
+        
+        <div class="result-item" id="result-item-1">
+          <div class="translation-list" id="translation-list-1"></div>
+        </div>
+
+        <div class="result-item" id="result-item-2">
+          <div class="translation-list" id="translation-list-2"></div>
+        </div>
+
+      </div>
+
+      <div id="empty-state" class="empty-state">Enter text to see translations...</div>
+      <div id="error-message" class="error-message"></div>
+    </div>
+  </div>
+
+  <script>
+    const text1 = document.getElementById('text1');
+    const text2 = document.getElementById('text2');
+    const selectedLangsEl = document.getElementById('selectedLangs');
+    const resultsContainer = document.getElementById('results');
+    const emptyState = document.getElementById('empty-state');
+    const errorMessage = document.getElementById('error-message');
+    const languageRadios = Array.from(document.querySelectorAll('.language-radio'));
+    const fontSizeButtons = Array.from(document.querySelectorAll('[data-control="font-size"]'));
+    const alignButtons = Array.from(document.querySelectorAll('[data-control="align"]'));
+    const fullscreenToggle = document.getElementById('fullscreen-toggle');
+    const resultsBox = document.querySelector('.results-box');
+
+    const langNames = {
+      'fr': 'French',
+      'ja': 'Japanese',
+      'zh-CN': 'Chinese (Simplified)',
+      'zh-TW': 'Chinese (Traditional)'
+    };
+
+    let debounceTimer;
+
+    function getSelectedLanguages() {
+      const selectedRadio = languageRadios.find((radio) => radio.checked);
+      return selectedRadio ? [selectedRadio.value] : [];
+    }
+
+    function updateSelectedLanguages() {
+      const selectedLanguages = getSelectedLanguages();
+      selectedLangsEl.textContent = selectedLanguages.length
+        ? selectedLanguages.map((language) => langNames[language]).join(', ')
+        : 'No languages selected';
+    }
+
+    function renderTranslations(container, selectedLanguages, translations = [], originalText = '') {
+      container.innerHTML = '';
+
+      if (!selectedLanguages.length) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'translation-group';
+        placeholder.innerHTML = '<div class="translation-label">No languages selected</div>';
+        container.appendChild(placeholder);
+        return;
+      }
+
+      selectedLanguages.forEach((language, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'translation-item';
+
+        // First paragraph: original English menu
+        const orig = document.createElement('div');
+        orig.className = 'original-text';
+        orig.textContent = originalText || '';
+
+        // Second paragraph: translation (large)
+        const combined = document.createElement('div');
+        combined.className = 'translation-text';
+        const transObj = translations[index];
+        const displayText = transObj ? transObj.text : 'translating...';
+        combined.textContent = displayText;
+
+        wrapper.appendChild(orig);
+        wrapper.appendChild(combined);
+
+        if (transObj && transObj.transliteration) {
+          const translit = document.createElement('div');
+          translit.className = 'translation-translit';
+          translit.textContent = transObj.transliteration;
+          wrapper.appendChild(translit);
+        }
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    async function translateTextField(text, container) {
+      const selectedLanguages = getSelectedLanguages();
+      renderTranslations(container, selectedLanguages, [], text);
+
+      if (!selectedLanguages.length || !text) {
+        return;
+      }
+
+      const translations = await Promise.all(
+        selectedLanguages.map((language) => fetchTranslation(text, language))
+      );
+
+      renderTranslations(container, selectedLanguages, translations, text);
+    }
+
+    async function translate() {
+      const t1 = text1.value.trim();
+      const t2 = text2.value.trim();
+      errorMessage.style.display = 'none';
+      updateSelectedLanguages();
+
+      if (!t1 && !t2) {
+        resultsContainer.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      try {
+        if (t1) {
+          document.getElementById('result-item-1').style.display = 'block';
+          await translateTextField(t1, document.getElementById('translation-list-1'));
+        } else {
+          document.getElementById('result-item-1').style.display = 'none';
+        }
+
+        if (t2) {
+          document.getElementById('result-item-2').style.display = 'block';
+          await translateTextField(t2, document.getElementById('translation-list-2'));
+        } else {
+          document.getElementById('result-item-2').style.display = 'none';
+        }
+      } catch (err) {
+        console.error('Translation error:', err);
+        errorMessage.textContent = '❌ Make sure the backend server is running (node server.js)';
+        errorMessage.style.display = 'block';
+      }
+    }
+
+    async function fetchTranslation(text, targetLang) {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, targetLang })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return { text: data.text, transliteration: data.transliteration || '' };
+    }
+
+    text1.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(translate, 600);
+    });
+
+    text2.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(translate, 600);
+    });
+
+    languageRadios.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        updateSelectedLanguages();
+        translate();
+      });
+    });
+
+    function setActiveButton(buttons, value) {
+      buttons.forEach((button) => {
+        const isActive = button.dataset.value === value;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+    }
+
+    function applyDisplayOptions() {
+      if (!resultsBox) return;
+
+      const activeFontSize = fontSizeButtons.find((button) => button.classList.contains('active'))?.dataset.value || 'medium';
+      const activeAlign = alignButtons.find((button) => button.classList.contains('active'))?.dataset.value || 'left';
+
+      resultsBox.classList.remove('size-small', 'size-medium', 'size-large', 'size-x-large', 'size-xx-large');
+      resultsBox.classList.remove('align-left', 'align-center', 'align-right');
+      resultsBox.classList.add(`size-${activeFontSize}`);
+      resultsBox.classList.add(`align-${activeAlign}`);
+    }
+
+    fontSizeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setActiveButton(fontSizeButtons, button.dataset.value);
+        applyDisplayOptions();
+      });
+    });
+
+    alignButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setActiveButton(alignButtons, button.dataset.value);
+        applyDisplayOptions();
+      });
+    });
+
+    if (fullscreenToggle && resultsBox) {
+      fullscreenToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const isFullscreen = resultsBox.classList.toggle('fullscreen');
+        fullscreenToggle.classList.toggle('active', isFullscreen);
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!resultsBox.classList.contains('fullscreen')) return;
+        resultsBox.classList.remove('fullscreen');
+        fullscreenToggle.classList.remove('active');
+      });
+    }
+
+    // Initialize
+    setActiveButton(fontSizeButtons, 'medium');
+    setActiveButton(alignButtons, 'left');
+    applyDisplayOptions();
+    updateSelectedLanguages();
+  </script>
+</body>
+</html>
