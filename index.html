@@ -77,6 +77,10 @@
       border-radius: 4px;
       padding: 1.5rem;
       transition: all 0.2s ease;
+      --source-font-size: 14px;
+      --translation-font-size: 14px;
+      --translit-font-size: 13px;
+      --custom-font-size: 72px;
     }
 
     .results-box.fullscreen {
@@ -231,86 +235,69 @@
     }
 
     .icon-control-btn.small-font {
-      font-size: 13px;
+      font-size: 11px;
     }
 
     .icon-control-btn.medium-font {
-      font-size: 16px;
+      font-size: 15px;
     }
 
     .icon-control-btn.large-font {
-      font-size: 20px;
+      font-size: 18px;
     }
 
     .icon-control-btn.x-large-font {
-      font-size: 24px;
+      font-size: 21px;
     }
 
-    .icon-control-btn.xx-large-font {
-      font-size: 28px;
+    .font-size-input {
+      width: 40px !important;
+      height: 20px !important;
+      min-height: 28px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-size: 11px;
+      text-align: center;
+      color: #333;
+      background: white;
+      font-size: 12px !important;
     }
 
-    .results-box.size-small .original-text {
-      font-size: 12px;
+    .results-box.size-small {
+      --source-font-size: 24px;
+      --translation-font-size: 32px;
+      --translit-font-size: 20px;
     }
 
-    .results-box.size-small .translation-text {
-      font-size: 18px;
+    .results-box.size-medium {
+      --source-font-size: 28px;
+      --translation-font-size: 40px;
+      --translit-font-size: 24px;
     }
 
-    .results-box.size-small .translation-translit {
-      font-size: 13px;
+    .results-box.size-large {
+      --source-font-size: 34px;
+      --translation-font-size: 50px;
+      --translit-font-size: 30px;
     }
 
-    .results-box.size-medium .original-text {
-      font-size: 14px;
+    .results-box.size-x-large {
+      --source-font-size: 40px;
+      --translation-font-size: 60px;
+      --translit-font-size: 36px;
     }
 
-    .results-box.size-medium .translation-text {
-      font-size: 24px;
+    .results-box.size-custom {
+      --source-font-size: calc(var(--custom-font-size, 72px) * 0.6);
+      --translation-font-size: var(--custom-font-size, 72px);
+      --translit-font-size: calc(var(--custom-font-size, 72px) * 0.55);
     }
 
-    .results-box.size-medium .translation-translit {
-      font-size: 16px;
-    }
-
-    .results-box.size-large .original-text {
-      font-size: 16px;
-    }
-
-    .results-box.size-large .translation-text {
-      font-size: 32px;
+    .results-box.size-large .translation-text,
+    .results-box.size-x-large .translation-text,
+    .results-box.size-custom .translation-text {
       font-weight: 700;
-    }
-
-    .results-box.size-large .translation-translit {
-      font-size: 20px;
-    }
-
-    .results-box.size-x-large .original-text {
-      font-size: 18px;
-    }
-
-    .results-box.size-x-large .translation-text {
-      font-size: 40px;
-      font-weight: 700;
-    }
-
-    .results-box.size-x-large .translation-translit {
-      font-size: 24px;
-    }
-
-    .results-box.size-xx-large .original-text {
-      font-size: 20px;
-    }
-
-    .results-box.size-xx-large .translation-text {
-      font-size: 48px;
-      font-weight: 700;
-    }
-
-    .results-box.size-xx-large .translation-translit {
-      font-size: 28px;
     }
 
     .results-box.align-left .translation-item {
@@ -347,6 +334,18 @@
       font-size: 14px;
       color: #333;
       line-height: 1.5;
+    }
+
+    .results-box .original-text {
+      font-size: var(--source-font-size);
+    }
+
+    .results-box .translation-text {
+      font-size: var(--translation-font-size);
+    }
+
+    .results-box .translation-translit {
+      font-size: var(--translit-font-size);
     }
     
     .empty-state {
@@ -415,7 +414,7 @@
         <button type="button" class="icon-control-btn medium-font active" data-control="font-size" data-value="medium" title="Medium font">A</button>
         <button type="button" class="icon-control-btn large-font" data-control="font-size" data-value="large" title="Large font">A</button>
         <button type="button" class="icon-control-btn x-large-font" data-control="font-size" data-value="x-large" title="Extra large font">A</button>
-        <button type="button" class="icon-control-btn xx-large-font" data-control="font-size" data-value="xx-large" title="Extra extra large font">A</button>
+        <input type="text" class="font-size-input" id="font-size-input" value="72" inputmode="numeric" placeholder="px" aria-label="Custom font size">
       </div>
       <div class="control-group" aria-label="Alignment">
         <button type="button" class="icon-control-btn active" data-control="align" data-value="left" title="Align left">
@@ -462,6 +461,7 @@
     const errorMessage = document.getElementById('error-message');
     const languageRadios = Array.from(document.querySelectorAll('.language-radio'));
     const fontSizeButtons = Array.from(document.querySelectorAll('[data-control="font-size"]'));
+    const fontSizeInput = document.getElementById('font-size-input');
     const alignButtons = Array.from(document.querySelectorAll('[data-control="align"]'));
     const fullscreenToggle = document.getElementById('fullscreen-toggle');
     const resultsBox = document.querySelector('.results-box');
@@ -474,6 +474,15 @@
     };
 
     let debounceTimer;
+    let currentFontSizePreset = 'medium';
+    let fontSizeMode = 'preset';
+
+    const fontSizePresetMap = {
+      small: '32',
+      medium: '40',
+      large: '50',
+      'x-large': '60'
+    };
 
     function getSelectedLanguages() {
       const selectedRadio = languageRadios.find((radio) => radio.checked);
@@ -619,24 +628,46 @@
       });
     }
 
+    function syncFontSizeInput(value) {
+      if (!fontSizeInput) return;
+      fontSizeInput.value = fontSizePresetMap[value] || '72';
+    }
+
     function applyDisplayOptions() {
       if (!resultsBox) return;
 
-      const activeFontSize = fontSizeButtons.find((button) => button.classList.contains('active'))?.dataset.value || 'medium';
       const activeAlign = alignButtons.find((button) => button.classList.contains('active'))?.dataset.value || 'left';
+      const customSize = fontSizeInput ? fontSizeInput.value.trim() : '';
 
-      resultsBox.classList.remove('size-small', 'size-medium', 'size-large', 'size-x-large', 'size-xx-large');
+      resultsBox.classList.remove('size-small', 'size-medium', 'size-large', 'size-x-large', 'size-custom');
       resultsBox.classList.remove('align-left', 'align-center', 'align-right');
-      resultsBox.classList.add(`size-${activeFontSize}`);
+
+      if (fontSizeMode === 'custom' && customSize && !Number.isNaN(Number(customSize))) {
+        resultsBox.classList.add('size-custom');
+        resultsBox.style.setProperty('--custom-font-size', `${customSize}px`);
+      } else {
+        resultsBox.classList.add(`size-${currentFontSizePreset}`);
+        resultsBox.style.removeProperty('--custom-font-size');
+      }
       resultsBox.classList.add(`align-${activeAlign}`);
     }
 
     fontSizeButtons.forEach((button) => {
       button.addEventListener('click', () => {
-        setActiveButton(fontSizeButtons, button.dataset.value);
+        currentFontSizePreset = button.dataset.value;
+        fontSizeMode = 'preset';
+        setActiveButton(fontSizeButtons, currentFontSizePreset);
+        syncFontSizeInput(currentFontSizePreset);
         applyDisplayOptions();
       });
     });
+
+    if (fontSizeInput) {
+      fontSizeInput.addEventListener('input', () => {
+        fontSizeMode = 'custom';
+        applyDisplayOptions();
+      });
+    }
 
     alignButtons.forEach((button) => {
       button.addEventListener('click', () => {
@@ -660,7 +691,10 @@
     }
 
     // Initialize
+    currentFontSizePreset = 'medium';
+    fontSizeMode = 'preset';
     setActiveButton(fontSizeButtons, 'medium');
+    syncFontSizeInput(currentFontSizePreset);
     setActiveButton(alignButtons, 'left');
     applyDisplayOptions();
     updateSelectedLanguages();
