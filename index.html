@@ -91,7 +91,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 2rem;
+      padding: 0;
       border-radius: 0;
       box-shadow: none;
       overflow: auto;
@@ -393,18 +393,8 @@
       </div>
 
       <div class="input-group">
-        <label>Languages</label>
-        <div class="language-options">
-          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="zh-CN"> Chinese (Simplified)</label>
-          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="zh-TW"> Chinese (Traditional)</label>
-          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="fr"> French</label>
-          <label class="checkbox-option"><input type="radio" class="language-radio" name="selected-language" value="ja"> Japanese</label>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Selected languages</label>
-        <div class="selected-box" id="selectedLangs">Chinese (Simplified), French</div>
+        <label>Target language</label>
+        <select id="language-select" aria-label="Target language"></select>
       </div>
     </div>
 
@@ -455,23 +445,125 @@
   <script>
     const text1 = document.getElementById('text1');
     const text2 = document.getElementById('text2');
-    const selectedLangsEl = document.getElementById('selectedLangs');
     const resultsContainer = document.getElementById('results');
     const emptyState = document.getElementById('empty-state');
     const errorMessage = document.getElementById('error-message');
-    const languageRadios = Array.from(document.querySelectorAll('.language-radio'));
+    const languageSelect = document.getElementById('language-select');
     const fontSizeButtons = Array.from(document.querySelectorAll('[data-control="font-size"]'));
     const fontSizeInput = document.getElementById('font-size-input');
     const alignButtons = Array.from(document.querySelectorAll('[data-control="align"]'));
     const fullscreenToggle = document.getElementById('fullscreen-toggle');
     const resultsBox = document.querySelector('.results-box');
 
-    const langNames = {
-      'fr': 'French',
-      'ja': 'Japanese',
-      'zh-CN': 'Chinese (Simplified)',
-      'zh-TW': 'Chinese (Traditional)'
-    };
+    const availableLanguages = [
+      { value: 'af', label: 'Afrikaans' },
+      { value: 'sq', label: 'Albanian' },
+      { value: 'am', label: 'Amharic' },
+      { value: 'ar', label: 'Arabic' },
+      { value: 'hy', label: 'Armenian' },
+      { value: 'az', label: 'Azerbaijani' },
+      { value: 'eu', label: 'Basque' },
+      { value: 'be', label: 'Belarusian' },
+      { value: 'bn', label: 'Bengali' },
+      { value: 'bs', label: 'Bosnian' },
+      { value: 'bg', label: 'Bulgarian' },
+      { value: 'ca', label: 'Catalan' },
+      { value: 'ceb', label: 'Cebuano' },
+      { value: 'ny', label: 'Chichewa' },
+      { value: 'zh-CN', label: 'Chinese (Simplified)' },
+      { value: 'zh-TW', label: 'Chinese (Traditional)' },
+      { value: 'co', label: 'Corsican' },
+      { value: 'hr', label: 'Croatian' },
+      { value: 'cs', label: 'Czech' },
+      { value: 'da', label: 'Danish' },
+      { value: 'nl', label: 'Dutch' },
+      { value: 'en', label: 'English' },
+      { value: 'eo', label: 'Esperanto' },
+      { value: 'et', label: 'Estonian' },
+      { value: 'fi', label: 'Finnish' },
+      { value: 'fr', label: 'French' },
+      { value: 'fy', label: 'Frisian' },
+      { value: 'gl', label: 'Galician' },
+      { value: 'ka', label: 'Georgian' },
+      { value: 'de', label: 'German' },
+      { value: 'el', label: 'Greek' },
+      { value: 'gu', label: 'Gujarati' },
+      { value: 'ht', label: 'Haitian Creole' },
+      { value: 'ha', label: 'Hausa' },
+      { value: 'haw', label: 'Hawaiian' },
+      { value: 'he', label: 'Hebrew' },
+      { value: 'hi', label: 'Hindi' },
+      { value: 'hmn', label: 'Hmong' },
+      { value: 'hu', label: 'Hungarian' },
+      { value: 'is', label: 'Icelandic' },
+      { value: 'ig', label: 'Igbo' },
+      { value: 'id', label: 'Indonesian' },
+      { value: 'ga', label: 'Irish' },
+      { value: 'it', label: 'Italian' },
+      { value: 'ja', label: 'Japanese' },
+      { value: 'jv', label: 'Javanese' },
+      { value: 'kn', label: 'Kannada' },
+      { value: 'kk', label: 'Kazakh' },
+      { value: 'km', label: 'Khmer' },
+      { value: 'rw', label: 'Kinyarwanda' },
+      { value: 'ko', label: 'Korean' },
+      { value: 'ku', label: 'Kurdish' },
+      { value: 'ky', label: 'Kyrgyz' },
+      { value: 'lo', label: 'Lao' },
+      { value: 'la', label: 'Latin' },
+      { value: 'lv', label: 'Latvian' },
+      { value: 'lt', label: 'Lithuanian' },
+      { value: 'lb', label: 'Luxembourgish' },
+      { value: 'mk', label: 'Macedonian' },
+      { value: 'mg', label: 'Malagasy' },
+      { value: 'ms', label: 'Malay' },
+      { value: 'ml', label: 'Malayalam' },
+      { value: 'mt', label: 'Maltese' },
+      { value: 'mi', label: 'Maori' },
+      { value: 'mr', label: 'Marathi' },
+      { value: 'mn', label: 'Mongolian' },
+      { value: 'my', label: 'Myanmar (Burmese)' },
+      { value: 'ne', label: 'Nepali' },
+      { value: 'no', label: 'Norwegian' },
+      { value: 'ps', label: 'Pashto' },
+      { value: 'fa', label: 'Persian' },
+      { value: 'pl', label: 'Polish' },
+      { value: 'pt', label: 'Portuguese' },
+      { value: 'pa', label: 'Punjabi' },
+      { value: 'ro', label: 'Romanian' },
+      { value: 'ru', label: 'Russian' },
+      { value: 'sm', label: 'Samoan' },
+      { value: 'gd', label: 'Scots Gaelic' },
+      { value: 'sr', label: 'Serbian' },
+      { value: 'st', label: 'Sesotho' },
+      { value: 'sn', label: 'Shona' },
+      { value: 'sd', label: 'Sindhi' },
+      { value: 'si', label: 'Sinhala' },
+      { value: 'sk', label: 'Slovak' },
+      { value: 'sl', label: 'Slovenian' },
+      { value: 'so', label: 'Somali' },
+      { value: 'es', label: 'Spanish' },
+      { value: 'su', label: 'Sundanese' },
+      { value: 'sw', label: 'Swahili' },
+      { value: 'sv', label: 'Swedish' },
+      { value: 'tl', label: 'Tagalog' },
+      { value: 'tg', label: 'Tajik' },
+      { value: 'ta', label: 'Tamil' },
+      { value: 'te', label: 'Telugu' },
+      { value: 'th', label: 'Thai' },
+      { value: 'tr', label: 'Turkish' },
+      { value: 'uk', label: 'Ukrainian' },
+      { value: 'ur', label: 'Urdu' },
+      { value: 'uz', label: 'Uzbek' },
+      { value: 'vi', label: 'Vietnamese' },
+      { value: 'cy', label: 'Welsh' },
+      { value: 'xh', label: 'Xhosa' },
+      { value: 'yi', label: 'Yiddish' },
+      { value: 'yo', label: 'Yoruba' },
+      { value: 'zu', label: 'Zulu' }
+    ];
+
+    const langNames = Object.fromEntries(availableLanguages.map(({ value, label }) => [value, label]));
 
     let debounceTimer;
     let currentFontSizePreset = 'medium';
@@ -484,16 +576,29 @@
       'x-large': '60'
     };
 
+    function populateLanguageOptions() {
+      if (!languageSelect) return;
+
+      availableLanguages.forEach(({ value, label }) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        languageSelect.appendChild(option);
+      });
+
+      languageSelect.value = 'zh-CN';
+    }
+
     function getSelectedLanguages() {
-      const selectedRadio = languageRadios.find((radio) => radio.checked);
-      return selectedRadio ? [selectedRadio.value] : [];
+      return languageSelect?.value ? [languageSelect.value] : [];
     }
 
     function updateSelectedLanguages() {
       const selectedLanguages = getSelectedLanguages();
-      selectedLangsEl.textContent = selectedLanguages.length
-        ? selectedLanguages.map((language) => langNames[language]).join(', ')
-        : 'No languages selected';
+      if (selectedLanguages.length) {
+        const label = langNames[selectedLanguages[0]] || selectedLanguages[0];
+        document.title = `Translator - ${label}`;
+      }
     }
 
     function renderTranslations(container, selectedLanguages, translations = [], originalText = '') {
@@ -545,11 +650,20 @@
         return;
       }
 
-      const translations = await Promise.all(
-        selectedLanguages.map((language) => fetchTranslation(text, language))
-      );
+      try {
+        const translations = await Promise.all(
+          selectedLanguages.map((language) => fetchTranslation(text, language))
+        );
 
-      renderTranslations(container, selectedLanguages, translations, text);
+        renderTranslations(container, selectedLanguages, translations, text);
+      } catch (err) {
+        console.error('Translation error:', err);
+        const fallbackTranslations = selectedLanguages.map(() => ({
+          text: 'Translation unavailable right now',
+          transliteration: ''
+        }));
+        renderTranslations(container, selectedLanguages, fallbackTranslations, text);
+      }
     }
 
     async function translate() {
@@ -566,24 +680,18 @@
 
       emptyState.style.display = 'none';
 
-      try {
-        if (t1) {
-          document.getElementById('result-item-1').style.display = 'block';
-          await translateTextField(t1, document.getElementById('translation-list-1'));
-        } else {
-          document.getElementById('result-item-1').style.display = 'none';
-        }
+      if (t1) {
+        document.getElementById('result-item-1').style.display = 'block';
+        await translateTextField(t1, document.getElementById('translation-list-1'));
+      } else {
+        document.getElementById('result-item-1').style.display = 'none';
+      }
 
-        if (t2) {
-          document.getElementById('result-item-2').style.display = 'block';
-          await translateTextField(t2, document.getElementById('translation-list-2'));
-        } else {
-          document.getElementById('result-item-2').style.display = 'none';
-        }
-      } catch (err) {
-        console.error('Translation error:', err);
-        errorMessage.textContent = '❌ Make sure the backend server is running (node server.js)';
-        errorMessage.style.display = 'block';
+      if (t2) {
+        document.getElementById('result-item-2').style.display = 'block';
+        await translateTextField(t2, document.getElementById('translation-list-2'));
+      } else {
+        document.getElementById('result-item-2').style.display = 'none';
       }
     }
 
@@ -613,12 +721,12 @@
       debounceTimer = setTimeout(translate, 600);
     });
 
-    languageRadios.forEach((radio) => {
-      radio.addEventListener('change', () => {
+    if (languageSelect) {
+      languageSelect.addEventListener('change', () => {
         updateSelectedLanguages();
         translate();
       });
-    });
+    }
 
     function setActiveButton(buttons, value) {
       buttons.forEach((button) => {
@@ -693,6 +801,7 @@
     // Initialize
     currentFontSizePreset = 'medium';
     fontSizeMode = 'preset';
+    populateLanguageOptions();
     setActiveButton(fontSizeButtons, 'medium');
     syncFontSizeInput(currentFontSizePreset);
     setActiveButton(alignButtons, 'left');

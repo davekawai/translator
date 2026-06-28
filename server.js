@@ -56,14 +56,43 @@ async function translateText(text, targetLang, fetchImpl = fetch) {
     throw new Error('Translation returned no text');
   }
 
-  return parsed; // { text, transliteration }
+  return parsed.text;
+}
+
+async function translateTextWithDetails(text, targetLang, fetchImpl = fetch) {
+  if (typeof text !== 'string' || !text.trim()) {
+    throw new Error('Text is required');
+  }
+
+  if (typeof targetLang !== 'string' || !targetLang.trim()) {
+    throw new Error('targetLang is required');
+  }
+
+  const encodedText = encodeURIComponent(text.trim());
+  const encodedTargetLang = encodeURIComponent(targetLang.trim());
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodedTargetLang}&dt=t&dt=rm&q=${encodedText}`;
+
+  const response = await fetchImpl(url);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Translation request failed with status ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  const parsed = parseTranslationResponse(data);
+
+  if (!parsed.text) {
+    throw new Error('Translation returned no text');
+  }
+
+  return parsed;
 }
 
 app.post('/api/translate', async (req, res) => {
   const { text, targetLang } = req.body;
 
   try {
-    const translatedText = await translateText(text, targetLang);
+    const translatedText = await translateTextWithDetails(text, targetLang);
     res.json({ text: translatedText.text, transliteration: translatedText.transliteration });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -76,10 +105,23 @@ app.get('*', (req, res) => {
 });
 
 if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`✅ Translator running on port ${PORT}`);
-  });
+  const portFromEnv = Number(process.env.PORT || 3000);
+  const startServer = (port) => {
+    const server = app.listen(port, () => {
+      console.log(`✅ Translator running on port ${port}`);
+    });
+
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.warn(`Port ${port} is busy. Trying ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        throw error;
+      }
+    });
+  };
+
+  startServer(portFromEnv);
 }
 
-module.exports = { app, translateText };
+module.exports = { app, translateText, translateTextWithDetails };
